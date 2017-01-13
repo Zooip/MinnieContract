@@ -122,7 +122,7 @@ contract MinnieBank is owned {
     /////// Deployment function
     
     //Set initial state
-    function MinnieBalance(){
+    function MinnieBank(){
         trustedAddresses.push(owner); //Owner is a trusted address
         
         
