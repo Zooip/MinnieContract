@@ -392,18 +392,25 @@ contract PeriodicContributionReporter is owned, bankTrusted{
     // Report a contribution for the current period
     // If a report already existed, update it
     function reportContribution(uint score) onlyContributor {
-        // If contributor wasn't registered for this period, register it
-        bool alreadyRegistered = false;
-        for(uint i = 0; i<periods[currentPeriodNumber()].contributors.length; i++ ){
-            if(periods[currentPeriodNumber()].contributors[i]==msg.sender){alreadyRegistered=true;}
-        }
-        if(!alreadyRegistered){
-            periods[currentPeriodNumber()].contributors.push(msg.sender);
-        }
+        reportContributionFor(msg.sender,score);
+    }
+    
+    //Anyone can trigger a payout since only contributors are rewarded
+    function payOut(uint periodNumber) {
+        // You can only pay out a closed period
+        if(periodNumber >= currentPeriodNumber()){ throw; }
         
-        // Update report
-        periods[currentPeriodNumber()].reports[msg.sender]=score;
-        Report(currentPeriodNumber(),msg.sender,score);
+        // You can't pay out a period already payed out
+        if(periods[periodNumber].payedOut) {throw;}
+        periods[periodNumber].payedOut=true;
+        
+        Payout(periodNumber);
+        
+        // Pay each contributors
+        for(uint i = 0; i<periods[periodNumber].contributors.length; i++ ){
+            address contributor = periods[periodNumber].contributors[i] ;
+            tokenBank.addTokenTo(contributor, rewardForScore[periods[periodNumber].reports[contributor]]);
+        }
     }
     
     //Anyone can trigger a payout since only contributors are rewarded
